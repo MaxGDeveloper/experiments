@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useContextMenu } from '@/components/CustomContextMenu/customContMenuViewModel'
+import type { MenuItem } from 'primevue/menuitem'
 import { ref } from 'vue'
 
 interface TestTableData {
@@ -29,15 +31,45 @@ const usersData = ref<TestTableData[]>([
   { fio: 'Семенов Тимур Андреевич', lastName: 'Семенов', weight: 73 },
   { fio: 'Дмитриев Денис Вадимович', lastName: 'Дмитриев', weight: 92 },
 ])
+
+// --- функция, формирующая пункты меню по строке ---
+function itemsForRow(row: TestTableData | null): MenuItem[] {
+  if (!row) return []
+  return [
+    { label: `Открыть ${row.lastName}`, command: () => console.log('open', row) },
+    { label: 'Редактировать', command: () => console.log('edit', row) },
+    { separator: true },
+    { label: 'Удалить', command: () => console.log('delete', row) },
+  ]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function bind(p?: any) {
+  return {
+    contextmenu: (e: MouseEvent) => {
+      e.preventDefault()
+      showMenu(e, p)
+    },
+  }
+}
+
+const { cmRef, menuModel, showMenu } = useContextMenu(itemsForRow)
 </script>
 
 <template>
   <main style="margin: 10px">
     <div style="display: flex; flex-direction: column">
-      <h2>Блок для контекстного меню без таблицы</h2>
+      <ContextMenu :model="menuModel" ref="cmRef" appendTo="body" />
+      <h2 @contextmenu.prevent="(e) => showMenu(e, { type: 'h2' })">
+        Блок для контекстного меню без таблицы (ПКМ)
+      </h2>
+
+      <div v-on="bind({ type: 'div', id: 1 })">Тестовый див (ПКМ)</div>
     </div>
     <div style="display: flex; flex-direction: column; width: 100%; margin: 0, 10px">
       <h2>Блок для интеграции контекстного меню в таблицу</h2>
+
+      <ContextMenu :model="menuModel" ref="cmRef" appendTo="body" />
 
       <Card style="margin: 10px">
         <template #header>
@@ -47,7 +79,9 @@ const usersData = ref<TestTableData[]>([
           <DataTable :value="usersData" striped-rows show-gridlines style="width: 100%">
             <Column header="Фио пользователя">
               <template #body="slotprops">
-                <div>{{ slotprops.data.fio }}</div>
+                <div @contextmenu.prevent="(e) => showMenu(e, slotprops.data)">
+                  {{ slotprops.data.fio }}
+                </div>
               </template>
             </Column>
             <Column header="Фамилия">
