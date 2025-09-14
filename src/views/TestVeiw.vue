@@ -34,6 +34,11 @@ onMounted(() => {
     <h1>{{ title }}</h1>
     <p>Счетчик: {{ count }}</p>
     <button @click="increment">Увеличить</button>
+    <Button asChild v-slot="slotProps">
+      <RouterLink :to="{ name: 'home' }" :class="slotProps.class" style="text-decoration: none"
+        >Переход</RouterLink
+      >
+    </Button>
     <ul>
       <li v-for="item in items" :key="item.id">
         {{ item.name }}
@@ -52,7 +57,6 @@ onMounted(() => {
 
 button {
   background: #42b883;
-  color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
@@ -71,7 +75,6 @@ ul {
 
 li {
   padding: 8px;
-  background: #f3f3f3;
   margin-bottom: 5px;
   border-radius: 3px;
 }
