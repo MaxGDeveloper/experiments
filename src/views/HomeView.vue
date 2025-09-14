@@ -94,12 +94,30 @@ async function loadTable() {
       <Card style="margin: 10px">
         <template #header>
           <h2 style="text-align: center">Таблица с данными</h2>
-          <Button
-            label="Загрузить данные"
-            icon="pi pi-refresh"
-            @click="loadTable()"
-            :loading="loading"
-          />
+          <div style="display: flex; flex-direction: row; justify-content: baseline; gap: 10px">
+            <Button
+              label="Загрузить данные"
+              icon="pi pi-refresh"
+              @click="loadTable()"
+              :loading="loading"
+            />
+
+            <Button
+              label="Очистить данные"
+              icon="pi pi-trash"
+              @click="usersData = []"
+              :disabled="loading"
+            />
+
+            <Button asChild v-slot="slotProps">
+              <RouterLink
+                :to="{ name: 'about' }"
+                :class="slotProps.class"
+                style="text-decoration: none"
+                >Переход</RouterLink
+              >
+            </Button>
+          </div>
         </template>
         <template #content>
           <DataTable
