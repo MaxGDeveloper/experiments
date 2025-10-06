@@ -5,12 +5,8 @@
 </script>
 
 <template>
-  <div id="app">
+  <div>
     <!-- <Header /> -->
-
-    <!-- skip link (опция) -->
-    <a class="skip-link" href="#main-content">Перейти к содержимому</a>
-
     <!-- router-view через слот -> получаем Component и рендерим внутри transition -->
     <router-view v-slot="{ Component }">
       <!-- mode="out-in" гарантирует, что уходящий элемент закончится до входа нового -->

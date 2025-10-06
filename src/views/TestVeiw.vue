@@ -2,8 +2,13 @@
 import { useGetData } from '@/viewModels/testViewModel'
 import { onMounted } from 'vue'
 import { PrimeIcons } from '@primevue/core/api'
+import router from '@/router'
 
 const { loadData, currentData, idFind, isDataLoading, isFirstLoaded, loadTable } = useGetData()
+
+function toHome() {
+  router.push({ name: 'home' })
+}
 
 onMounted(() => {
   loadData()
@@ -16,7 +21,7 @@ onMounted(() => {
       <h2 style="text-align: center">Тестирую ненормальные обстоятельства</h2>
     </section>
     <section class="filter">
-      <div style="display: flex; align-items: center; flex: 0.7; gap: 20px">
+      <div style="display: flex; align-items: center; flex: 0.9; gap: 20px">
         <InputText
           @keyup.enter="loadTable"
           fluid
@@ -24,6 +29,7 @@ onMounted(() => {
           placeholder="Введите нужный ID"
         />
         <Button @click="loadTable" icon="pi pi-search" icon-pos="left" label="Поиск" />
+        <Button @click="toHome" icon="pi pi-arrow-left" icon-pos="left" label="Назад" />
       </div>
     </section>
     <section v-show="!isFirstLoaded">
