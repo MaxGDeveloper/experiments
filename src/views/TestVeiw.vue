@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGetData } from '@/viewModels/testViewModel'
 import { onMounted } from 'vue'
+import { PrimeIcons } from '@primevue/core/api'
 
 const { loadData, currentData, idFind, isDataLoading, isFirstLoaded, loadTable } = useGetData()
 
@@ -46,7 +47,13 @@ onMounted(() => {
         removableSort
         style="width: 100%; margin-bottom: 20px"
       >
-        <Column sortable header="ID" field="id" />
+        <Column sortable header="ID" field="id">
+          <template #sorticon="{ sortOrder }">
+            <i v-if="sortOrder === 0" :class="PrimeIcons.SORT" />
+            <i v-else-if="sortOrder === 1" :class="PrimeIcons.SORT_UP" />
+            <i v-else-if="sortOrder === -1" :class="PrimeIcons.SORT_DOWN" />
+          </template>
+        </Column>
         <Column sortable header="Фио пользователя" field="fio" />
         <Column sortable header="Вес" field="weight" />
         <Column sortable header="Возраст" field="age" />
