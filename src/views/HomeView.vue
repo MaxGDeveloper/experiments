@@ -93,18 +93,18 @@ async function loadTable() {
     <div style="display: flex; flex-direction: column; width: 100%; margin: 0, 10px">
       <Card style="margin: 10px">
         <template #header>
-          <h2 style="text-align: center">Таблица с данными</h2>
+          <h2 class="test" style="text-align: center">Таблица с данными</h2>
           <div style="display: flex; flex-direction: row; justify-content: baseline; gap: 10px">
             <Button
               label="Загрузить данные"
-              icon="pi pi-refresh"
+              icon="pi pi-trash"
               @click="loadTable()"
               :loading="loading"
             />
 
             <Button
               label="Очистить данные"
-              icon="pi pi-trash"
+              icon="pi pi-refresh"
               @click="usersData = []"
               :disabled="loading"
             />
@@ -157,3 +157,9 @@ async function loadTable() {
     </div>
   </main>
 </template>
+
+<style lang="css" scoped>
+.test {
+  color: aquamarine;
+}
+</style>

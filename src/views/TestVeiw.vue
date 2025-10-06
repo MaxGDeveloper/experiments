@@ -1,81 +1,81 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { useGetData } from '@/viewModels/testViewModel'
+import { onMounted } from 'vue'
 
-interface Item {
-  id: number
-  name: string
-}
+const { loadData, currentData, idFind, isDataLoading, isFirstLoaded, loadTable } = useGetData()
 
-// Реактивные данные
-const title = ref('Мое Vue 3 приложение')
-const count = ref(0)
-const items = ref<Item[]>([])
-
-// Методы
-const increment = () => {
-  count.value++
-}
-
-// Хуки жизненного цикла
 onMounted(() => {
-  // Имитация загрузки данных
-  setTimeout(() => {
-    items.value = [
-      { id: 1, name: 'Элемент 1' },
-      { id: 2, name: 'Элемент 2' },
-      { id: 3, name: 'Элемент 3' },
-    ]
-  }, 1000)
+  loadData()
 })
 </script>
 
 <template>
-  <div class="container">
-    <h1>{{ title }}</h1>
-    <p>Счетчик: {{ count }}</p>
-    <button @click="increment">Увеличить</button>
-    <Button asChild v-slot="slotProps">
-      <RouterLink :to="{ name: 'home' }" :class="slotProps.class" style="text-decoration: none"
-        >Переход</RouterLink
+  <div class="root">
+    <section>
+      <h2 style="text-align: center">Тестирую ненормальные обстоятельства</h2>
+    </section>
+    <section class="filter">
+      <div style="display: flex; align-items: center; flex: 0.7">
+        <InputText
+          @keyup.enter="loadTable"
+          fluid
+          v-model="idFind"
+          placeholder="Введите нужный ID"
+        />
+        <Button @click="loadTable" icon="pi pi-search" icon-pos="left" label="Поиск" />
+      </div>
+    </section>
+    <section v-show="!isFirstLoaded">
+      <h3 style="text-align: center">Пожалуйста, загрузите данные</h3>
+    </section>
+    <section v-show="isFirstLoaded">
+      <DataTable
+        :value="currentData"
+        :loading="isDataLoading"
+        loading-icon="pi pi-spinner"
+        paginator
+        paginator-position="top"
+        :rows="100"
+        :rowsPerPageOptions="[100, 250, 500, 1000]"
+        paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+        currentPageReportTemplate="{first} to {last} of {totalRecords}"
+        striped-rows
+        show-gridlines
+        style="width: 100%"
       >
-    </Button>
-    <ul>
-      <li v-for="item in items" :key="item.id">
-        {{ item.name }}
-      </li>
-    </ul>
+        <Column header="ID" field="id" />
+        <Column header="Фио пользователя" field="fio" />
+        <Column header="Фамилия" field="lastName" />
+        <Column header="Вес" field="weight" />
+        <Column header="Возраст" field="age" />
+        <Column header="Дата рождения">
+          <template #body="slotprops">
+            <div>
+              {{
+                slotprops.data.dateBirth
+                  ? new Date(slotprops.data.dateBirth).toLocaleDateString()
+                  : 'Неизвестно'
+              }}
+            </div>
+          </template>
+        </Column>
+      </DataTable>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-button {
-  background: #42b883;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-button:hover {
-  background: #359469;
-}
-
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-li {
-  padding: 8px;
-  margin-bottom: 5px;
-  border-radius: 3px;
+.filter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
 }
 </style>

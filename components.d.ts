@@ -11,11 +11,10 @@ declare module 'vue' {
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
     Column: typeof import('primevue/column')['default']
-    Context2: typeof import('./src/components/CustomContMenu2/Context2.vue')['default']
     ContextMenu: typeof import('primevue/contextmenu')['default']
-    ContextMenu2: typeof import('./src/components/CustomContMenu2/ContextMenu2.vue')['default']
-    CustomContMenu: typeof import('./src/components/CustomContextMenu/CustomContMenu.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
+    InputNumber: typeof import('primevue/inputnumber')['default']
+    InputText: typeof import('primevue/inputtext')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }
