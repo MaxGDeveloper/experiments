@@ -15,7 +15,7 @@ onMounted(() => {
       <h2 style="text-align: center">Тестирую ненормальные обстоятельства</h2>
     </section>
     <section class="filter">
-      <div style="display: flex; align-items: center; flex: 0.7">
+      <div style="display: flex; align-items: center; flex: 0.7; gap: 20px">
         <InputText
           @keyup.enter="loadTable"
           fluid
@@ -37,11 +37,13 @@ onMounted(() => {
         paginator-position="top"
         :rows="100"
         :rowsPerPageOptions="[100, 250, 500, 1000]"
+        scrollable
+        scroll-height="680px"
         paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
         currentPageReportTemplate="{first} to {last} of {totalRecords}"
         striped-rows
         show-gridlines
-        style="width: 100%"
+        style="width: 100%; margin-bottom: 20px"
       >
         <Column header="ID" field="id" />
         <Column header="Фио пользователя" field="fio" />
@@ -69,6 +71,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin: 10px;
 }
 
 .filter {
