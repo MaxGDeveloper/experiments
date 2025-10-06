@@ -3,6 +3,7 @@ import { useGetData } from '@/viewModels/testViewModel'
 import { onMounted } from 'vue'
 import { PrimeIcons } from '@primevue/core/api'
 import router from '@/router'
+import CustomInput from '@/components/CustomInput.vue'
 
 const { loadData, currentData, idFind, isDataLoading, isFirstLoaded, loadTable } = useGetData()
 
@@ -22,12 +23,31 @@ onMounted(() => {
     </section>
     <section class="filter">
       <div style="display: flex; align-items: center; flex: 0.9; gap: 20px">
-        <InputText
-          @keyup.enter="loadTable"
-          fluid
+        <CustomInput
+          style="display: flex; flex: 1"
           v-model="idFind"
           placeholder="Введите нужный ID"
+          type="text"
+          @enter="loadTable"
         />
+
+        <!-- <IconField style="display: flex; flex: 1">
+          <InputText
+            v-model.trim="idFind"
+            fluid
+            type="text"
+            placeholder="Введите нужный ID"
+            @keyup.enter="loadTable"
+          />
+          <Transition name="slide">
+            <InputIcon
+              v-if="idFind.length != 0"
+              class="pi pi-times input__icon"
+              @click="idFind = ''"
+            />
+          </Transition>
+        </IconField> -->
+
         <Button @click="loadTable" icon="pi pi-search" icon-pos="left" label="Поиск" />
         <Button @click="toHome" icon="pi pi-arrow-left" icon-pos="left" label="Назад" />
       </div>
@@ -93,5 +113,24 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
   margin: 20px 0;
+}
+
+.slide-enter-active {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.slide-leave-active {
+  animation: slideOut 0.3s ease-in forwards;
+}
+
+@keyframes slideIn {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 </style>
