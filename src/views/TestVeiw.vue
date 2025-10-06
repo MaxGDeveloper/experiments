@@ -37,20 +37,20 @@ onMounted(() => {
         paginator-position="top"
         :rows="100"
         :rowsPerPageOptions="[100, 250, 500, 1000]"
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
+        currentPageReportTemplate="{first} по {last} из {totalRecords}"
         scrollable
         scroll-height="680px"
-        paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-        currentPageReportTemplate="{first} to {last} of {totalRecords}"
         striped-rows
         show-gridlines
+        removableSort
         style="width: 100%; margin-bottom: 20px"
       >
-        <Column header="ID" field="id" />
-        <Column header="Фио пользователя" field="fio" />
-        <Column header="Фамилия" field="lastName" />
-        <Column header="Вес" field="weight" />
-        <Column header="Возраст" field="age" />
-        <Column header="Дата рождения">
+        <Column sortable header="ID" field="id" />
+        <Column sortable header="Фио пользователя" field="fio" />
+        <Column sortable header="Вес" field="weight" />
+        <Column sortable header="Возраст" field="age" />
+        <Column sortable header="Дата рождения">
           <template #body="slotprops">
             <div>
               {{
