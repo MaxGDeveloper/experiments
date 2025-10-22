@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { useGetData } from '@/viewModels/testViewModel'
+import { useGetData, usegetSeconddata } from '@/viewModels/testViewModel'
 import { onMounted } from 'vue'
 import { PrimeIcons } from '@primevue/core/api'
 import router from '@/router'
 import CustomInput from '@/components/CustomInput.vue'
 
 const { loadData, currentData, idFind, isDataLoading, isFirstLoaded, loadTable } = useGetData()
+const { loadSecondData, workerInfo } = usegetSeconddata()
 
 function toHome() {
   router.push({ name: 'home' })
@@ -13,6 +14,7 @@ function toHome() {
 
 onMounted(() => {
   loadData()
+  loadSecondData()
 })
 </script>
 
@@ -30,23 +32,6 @@ onMounted(() => {
           type="text"
           @enter="loadTable"
         />
-
-        <!-- <IconField style="display: flex; flex: 1">
-          <InputText
-            v-model.trim="idFind"
-            fluid
-            type="text"
-            placeholder="Введите нужный ID"
-            @keyup.enter="loadTable"
-          />
-          <Transition name="slide">
-            <InputIcon
-              v-if="idFind.length != 0"
-              class="pi pi-times input__icon"
-              @click="idFind = ''"
-            />
-          </Transition>
-        </IconField> -->
 
         <Button @click="loadTable" icon="pi pi-search" icon-pos="left" label="Поиск" />
         <Button @click="toHome" icon="pi pi-arrow-left" icon-pos="left" label="Назад" />
@@ -92,6 +77,15 @@ onMounted(() => {
                   : 'Неизвестно'
               }}
             </div>
+          </template>
+        </Column>
+        <Column header="Информация по работе">
+          <template #body>
+            <DataTable :value="workerInfo">
+              <Column sortable header="Работа" field="work" />
+              <Column sortable header="Зарплата" field="salary" />
+              <Column sortable header="Должность" field="position" />
+            </DataTable>
           </template>
         </Column>
       </DataTable>

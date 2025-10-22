@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import CustomTimer from './components/CustomTimer.vue'
+
 // импорт header/footer — опционально
 // import Header from '@/components/Header.vue'
 // import Footer from '@/components/Footer.vue'
@@ -7,6 +9,9 @@
 <template>
   <div>
     <!-- <Header /> -->
+    <header style="display: flex; justify-content: center">
+      <CustomTimer />
+    </header>
     <!-- router-view через слот -> получаем Component и рендерим внутри transition -->
     <router-view v-slot="{ Component }">
       <!-- mode="out-in" гарантирует, что уходящий элемент закончится до входа нового -->

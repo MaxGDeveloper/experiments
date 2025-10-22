@@ -13,6 +13,7 @@ declare module 'vue' {
     Column: typeof import('primevue/column')['default']
     ContextMenu: typeof import('primevue/contextmenu')['default']
     CustomInput: typeof import('./src/components/CustomInput.vue')['default']
+    CustomTimer: typeof import('./src/components/CustomTimer.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
     IconField: typeof import('primevue/iconfield')['default']
     InputIcon: typeof import('primevue/inputicon')['default']
