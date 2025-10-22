@@ -97,7 +97,7 @@ async function loadTable() {
           <div style="display: flex; flex-direction: row; justify-content: baseline; gap: 10px">
             <Button
               label="Загрузить данные"
-              icon="pi pi-trash"
+              icon="pi pi-download"
               @click="loadTable()"
               :loading="loading"
             />
