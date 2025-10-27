@@ -1,33 +1,31 @@
 <script setup lang="ts">
-import CustomTimer from './components/CustomTimer.vue'
-
-// импорт header/footer — опционально
-// import Header from '@/components/Header.vue'
-// import Footer from '@/components/Footer.vue'
+import { RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <div>
-    <!-- <Header /> -->
-    <header style="display: flex; justify-content: center">
-      <CustomTimer />
+  <div class="rootsite">
+    <header style="display: flex; justify-content: center; border-bottom: 2px solid darkgray">
+      <RouterLink class="mainurl" :to="{ name: 'Home' }">
+        <h2>Мой экспериментальный сайт</h2>
+      </RouterLink>
     </header>
-    <!-- router-view через слот -> получаем Component и рендерим внутри transition -->
-    <router-view v-slot="{ Component }">
-      <!-- mode="out-in" гарантирует, что уходящий элемент закончится до входа нового -->
-      <transition name="page" mode="out-in">
-        <!-- key обязателен, чтобы transition запускался при смене маршрута -->
-        <component :is="Component" :key="$route.fullPath" />
-      </transition>
-    </router-view>
+    <main>
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <KeepAlive>
+            <component :is="Component" :key="$route.fullPath" />
+          </KeepAlive>
+        </transition>
+      </router-view>
+    </main>
 
-    <!-- <Footer /> -->
+    <footer style="display: flex; justify-content: center; border-top: 2px solid darkgray">
+      <h2>Это что-то вроде футера</h2>
+    </footer>
   </div>
 </template>
 
-<!-- ВАЖНО: стили перехода НЕ помещаем в <style scoped>. -->
-<style>
-/* Простой fade + slide down */
+<style lang="css" scoped>
 .page-enter-active,
 .page-leave-active {
   transition:
@@ -47,18 +45,15 @@ import CustomTimer from './components/CustomTimer.vue'
   transform: translateY(0);
 }
 
-/* Небольшой стиль для skip-link (только пример) */
-.skip-link {
-  position: absolute;
-  left: -999px;
-  top: auto;
+.mainurl {
+  text-decoration: none;
+  color: black;
+  transition: 0.3s ease-in;
 }
-.skip-link:focus {
-  left: 1rem;
-  top: 1rem;
-  background: #fff;
-  padding: 6px 10px;
-  z-index: 9999;
-  border: 1px solid #ccc;
+
+.mainurl:hover {
+  color: rgb(57, 128, 43);
+  transform: scale(1.01);
+  transition: 0.3s ease-out;
 }
 </style>

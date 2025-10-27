@@ -6,18 +6,38 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
+      name: 'Home',
+      meta: {
+        title: 'Главная страница',
+      },
       component: HomeView,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/TestVeiw.vue'),
+      path: '/Experimental',
+      children: [
+        {
+          path: '/ExperimentalTable1',
+          name: 'ExperimentalTable1',
+          meta: {
+            title: 'Эксперименты с таблицей №1',
+          },
+          component: () => import('../views/TableExperiments.vue'),
+        },
+        {
+          path: '/ExperimentalTable2',
+          name: 'ExperimentalTable2',
+          meta: {
+            title: 'Эксперименты с таблицей №2',
+          },
+          component: () => import('../views/TableExperiments2.vue'),
+        },
+      ],
     },
   ],
+})
+
+router.beforeEach((to) => {
+  document.title = to.meta.title as string
 })
 
 export default router
