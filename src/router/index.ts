@@ -33,6 +33,19 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/anims',
+      children: [
+        {
+          path: '/anim1',
+          name: 'ExperimentalAnim1',
+          meta: {
+            title: 'Эксперименты с анимацией №1',
+          },
+          component: () => import('../views/animations/ExperimentalAnim1.vue'),
+        },
+      ],
+    },
   ],
 })
 

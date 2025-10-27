@@ -9,6 +9,9 @@ function goToExperimentalPage1() {
 function goToExperimentalPage2() {
   router.push({ name: 'ExperimentalTable2' })
 }
+function goToExperimentalPage3() {
+  router.push({ name: 'ExperimentalAnim1' })
+}
 </script>
 
 <template>
@@ -17,8 +20,8 @@ function goToExperimentalPage2() {
       <h2 style="text-align: center">Страница хаб для выхода в блоки экспериментов</h2>
     </section>
 
-    <section style="display: flex; flex-wrap: wrap">
-      <Card style="padding: 15px">
+    <section style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 16px">
+      <Card>
         <template #header>
           <h2>Тут все мои экспериментальные страницы</h2>
         </template>
@@ -37,11 +40,23 @@ function goToExperimentalPage2() {
           </div>
         </template>
       </Card>
+      <Card>
+        <template #header>
+          <h2>Анимации</h2>
+        </template>
+        <template #content>
+          <Button label="Анимации #1" :icon="PrimeIcons.ANDROID" @click="goToExperimentalPage3" />
+        </template>
+      </Card>
     </section>
   </div>
 </template>
 
 <style lang="css" scoped>
+:deep(.p-card) {
+  padding: 15px;
+}
+
 .root {
   display: flex;
   flex-direction: column;
