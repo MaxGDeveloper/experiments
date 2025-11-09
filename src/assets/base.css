@@ -19,10 +19,15 @@
   --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+
+  --site-background-color-light: rgb(240, 240, 240);
+  --site-background-color-dark: rgb(10, 9, 9);
 }
 
 /* semantic color variables for this project */
 :root {
+  --site-background-color: var(--site-background-color-light);
+
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
@@ -38,6 +43,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --site-background-color: var(--site-background-color-dark);
+
     --color-background: var(--vt-c-black);
     --color-background-soft: var(--vt-c-black-soft);
     --color-background-mute: var(--vt-c-black-mute);

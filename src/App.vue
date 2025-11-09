@@ -47,13 +47,13 @@ import { RouterLink } from 'vue-router'
 
 .mainurl {
   text-decoration: none;
-  color: black;
+  color: var(--color-text);
   transition: 0.3s ease-in;
 }
 
 .mainurl:hover {
-  color: rgb(57, 128, 43);
   transform: scale(1.01);
+  color: rgb(62, 142, 153);
   transition: 0.3s ease-out;
 }
 </style>

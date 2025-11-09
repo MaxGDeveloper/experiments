@@ -44,8 +44,11 @@ const isVisibleCont = ref(false)
 
 /* Общие стили контейнера */
 .container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 12px;
-  background-color: aquamarine;
+  background-color: var(--p-card-background);
   border-radius: 12px;
   overflow: hidden;
   /* плавный переход для flex-basis и ограничений */
@@ -59,7 +62,6 @@ const isVisibleCont = ref(false)
 
 /* Левый: по умолчанию занимает всё доступное место */
 .left {
-  /* flex: grow shrink basis */
   flex: 0 0 100%;
   max-width: 100%;
   min-width: 200px; /* чтобы не совсем сваливался */
