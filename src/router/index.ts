@@ -44,6 +44,14 @@ const router = createRouter({
           },
           component: () => import('../views/animations/ExperimentalAnim1.vue'),
         },
+        {
+          path: '/anim2',
+          name: 'ExperimentalAnim2',
+          meta: {
+            title: 'Эксперименты с анимацией №2 (пакет)',
+          },
+          component: () => import('../views/animations/ExperimentalAnim2.vue'),
+        },
       ],
     },
   ],

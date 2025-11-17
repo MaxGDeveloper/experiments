@@ -12,6 +12,9 @@ function goToExperimentalPage2() {
 function goToExperimentalPage3() {
   router.push({ name: 'ExperimentalAnim1' })
 }
+function goToExperimentalPage4() {
+  router.push({ name: 'ExperimentalAnim2' })
+}
 </script>
 
 <template>
@@ -45,7 +48,14 @@ function goToExperimentalPage3() {
           <h2>Анимации</h2>
         </template>
         <template #content>
-          <Button label="Анимации #1" :icon="PrimeIcons.ANDROID" @click="goToExperimentalPage3" />
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <Button label="Анимации #1" :icon="PrimeIcons.ANDROID" @click="goToExperimentalPage3" />
+            <Button
+              label="Анимации #2 (пакет)"
+              :icon="PrimeIcons.ANDROID"
+              @click="goToExperimentalPage4"
+            />
+          </div>
         </template>
       </Card>
     </section>
