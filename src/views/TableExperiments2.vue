@@ -9,7 +9,7 @@ const { loadData, currentData, idFind, isDataLoading, isFirstLoaded, loadTable }
 const { loadSecondData, workerInfo } = usegetSeconddata()
 
 function toHome() {
-  router.push({ name: 'home' })
+  router.push({ name: 'Home' })
 }
 
 onMounted(() => {

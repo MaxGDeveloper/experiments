@@ -53,26 +53,26 @@ async function loadTable() {
   await delay(2000)
 
   usersData.value = [
-    { fio: 'Иванов Иван Иванович', lastName: 'Иванов', weight: 72 },
-    { fio: 'Петров Петр Петрович', lastName: 'Петров', weight: 85 },
-    { fio: 'Сидоров Сидор Сидорович', lastName: 'Сидоров', weight: 68 },
-    { fio: 'Смирнов Иван Петрович', lastName: 'Смирнов', weight: 90 },
-    { fio: 'Кузнецов Алексей Викторович', lastName: 'Кузнецов', weight: 77 },
-    { fio: 'Попов Дмитрий Александрович', lastName: 'Попов', weight: 82 },
-    { fio: 'Соколов Михаил Игоревич', lastName: 'Соколов', weight: 65 },
-    { fio: 'Лебедев Николай Сергеевич', lastName: 'Лебедев', weight: 88 },
-    { fio: 'Морозов Владимир Павлович', lastName: 'Морозов', weight: 74 },
-    { fio: 'Егоров Игорь Николаевич', lastName: 'Егоров', weight: 79 },
-    { fio: 'Андреев Олег Дмитриевич', lastName: 'Андреев', weight: 83 },
-    { fio: 'Николаев Сергей Евгеньевич', lastName: 'Николаев', weight: 69 },
-    { fio: 'Фёдоров Валерий Михайлович', lastName: 'Фёдоров', weight: 95 },
-    { fio: 'Михайлов Александр Викторович', lastName: 'Михайлов', weight: 71 },
-    { fio: 'Павлов Егор Романович', lastName: 'Павлов', weight: 86 },
-    { fio: 'Захаров Платон Ильич', lastName: 'Захаров', weight: 78 },
-    { fio: 'Борисов Роман Константинович', lastName: 'Борисов', weight: 67 },
-    { fio: 'Васильев Владислав Юрьевич', lastName: 'Васильев', weight: 80 },
-    { fio: 'Семенов Тимур Андреевич', lastName: 'Семенов', weight: 73 },
-    { fio: 'Дмитриев Денис Вадимович', lastName: 'Дмитриев', weight: 92 },
+    { fio: 'Иванов Иван Иванович', lastName: 'Иванов', weight: 72.45 },
+    { fio: 'Петров Петр Петрович', lastName: 'Петров', weight: 85.564 },
+    { fio: 'Сидоров Сидор Сидорович', lastName: 'Сидоров', weight: 68.564 },
+    { fio: 'Смирнов Иван Петрович', lastName: 'Смирнов', weight: 90.34 },
+    { fio: 'Кузнецов Алексей Викторович', lastName: 'Кузнецов', weight: 77.32 },
+    { fio: 'Попов Дмитрий Александрович', lastName: 'Попов', weight: 82.234 },
+    { fio: 'Соколов Михаил Игоревич', lastName: 'Соколов', weight: 65.346 },
+    { fio: 'Лебедев Николай Сергеевич', lastName: 'Лебедев', weight: 88.896 },
+    { fio: 'Морозов Владимир Павлович', lastName: 'Морозов', weight: 74.674 },
+    { fio: 'Егоров Игорь Николаевич', lastName: 'Егоров', weight: 79.342 },
+    { fio: 'Андреев Олег Дмитриевич', lastName: 'Андреев', weight: 83.126 },
+    { fio: 'Николаев Сергей Евгеньевич', lastName: 'Николаев', weight: 69.592 },
+    { fio: 'Фёдоров Валерий Михайлович', lastName: 'Фёдоров', weight: 95.325 },
+    { fio: 'Михайлов Александр Викторович', lastName: 'Михайлов', weight: 71.675 },
+    { fio: 'Павлов Егор Романович', lastName: 'Павлов', weight: 86.464 },
+    { fio: 'Захаров Платон Ильич', lastName: 'Захаров', weight: 78.657 },
+    { fio: 'Борисов Роман Константинович', lastName: 'Борисов', weight: 67.456 },
+    { fio: 'Васильев Владислав Юрьевич', lastName: 'Васильев', weight: 80.562 },
+    { fio: 'Семенов Тимур Андреевич', lastName: 'Семенов', weight: 73.895 },
+    { fio: 'Дмитриев Денис Вадимович', lastName: 'Дмитриев', weight: 92.678 },
   ]
 
   loading.value = false
@@ -94,7 +94,7 @@ async function loadTable() {
       <Card style="margin: 10px">
         <template #header>
           <h2 class="test" style="text-align: center">Таблица с данными</h2>
-          <div style="display: flex; flex-direction: row; justify-content: baseline; gap: 10px">
+          <div style="display: flex; flex-direction: row; justify-content: center; gap: 10px">
             <Button
               label="Загрузить данные"
               icon="pi pi-download"
@@ -111,7 +111,7 @@ async function loadTable() {
 
             <Button asChild v-slot="slotProps">
               <RouterLink
-                :to="{ name: 'about' }"
+                :to="{ name: 'Home' }"
                 :class="slotProps.class"
                 style="text-decoration: none"
                 >Переход</RouterLink
