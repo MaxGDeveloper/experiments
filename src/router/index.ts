@@ -21,7 +21,7 @@ const router = createRouter({
           meta: {
             title: 'Эксперименты с таблицей №1',
           },
-          component: () => import('../views/TableExperiments.vue'),
+          component: () => import('../views/tables/TableExperiments.vue'),
         },
         {
           path: '/ExperimentalTable2',
@@ -29,7 +29,7 @@ const router = createRouter({
           meta: {
             title: 'Эксперименты с таблицей №2',
           },
-          component: () => import('../views/TableExperiments2.vue'),
+          component: () => import('../views/tables/TableExperiments2.vue'),
         },
       ],
     },
