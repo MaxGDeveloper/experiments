@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useGetData, usegetSeconddata } from '@/viewModels/testViewModel'
+import { useGetData, usegetSeconddata } from '@/hooks/useTableExperiments2'
 import { onMounted } from 'vue'
 import { PrimeIcons } from '@primevue/core/api'
 import router from '@/router'
