@@ -54,6 +54,19 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/pages',
+      children: [
+        {
+          path: '/journalEuqipment',
+          name: 'JournalPage',
+          meta: {
+            title: 'Детали',
+          },
+          component: () => import('@/views/pages/JournalOfTool.vue'),
+        },
+      ],
+    },
   ],
 })
 

@@ -2,6 +2,7 @@ import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { ru as ruLocale } from 'primelocale/js/ru.js'
 
 import App from './App.vue'
 import router from './router'
@@ -15,6 +16,7 @@ app.use(PrimeVue, {
   theme: {
     preset: Aura,
   },
+  locale: ruLocale,
 })
 
 app.use(createPinia())

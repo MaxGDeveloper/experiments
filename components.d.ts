@@ -22,6 +22,9 @@ declare module 'vue' {
     IconField: typeof import('primevue/iconfield')['default']
     InputIcon: typeof import('primevue/inputicon')['default']
     InputText: typeof import('primevue/inputtext')['default']
+    LongText: typeof import('./src/components/LongText.vue')['default']
+    Message: typeof import('primevue/message')['default']
+    PickList: typeof import('primevue/picklist')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }
@@ -39,6 +42,9 @@ declare global {
   const IconField: typeof import('primevue/iconfield')['default']
   const InputIcon: typeof import('primevue/inputicon')['default']
   const InputText: typeof import('primevue/inputtext')['default']
+  const LongText: typeof import('./src/components/LongText.vue')['default']
+  const Message: typeof import('primevue/message')['default']
+  const PickList: typeof import('primevue/picklist')['default']
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
 }

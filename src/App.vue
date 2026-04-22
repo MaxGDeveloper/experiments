@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 
 <template>
   <div class="rootsite">
-    <header style="display: flex; justify-content: center; border-bottom: 2px solid darkgray">
+    <header class="head">
       <RouterLink class="mainurl" :to="{ name: 'Home' }">
         <h2>Мой экспериментальный сайт</h2>
       </RouterLink>
@@ -19,7 +19,7 @@ import { RouterLink } from 'vue-router'
       </router-view>
     </main>
 
-    <footer style="display: flex; justify-content: center; border-top: 2px solid darkgray">
+    <footer class="foot">
       <h2>Это что-то вроде футера</h2>
     </footer>
   </div>
@@ -45,6 +45,19 @@ import { RouterLink } from 'vue-router'
   transform: translateY(0);
 }
 
+.head {
+  display: flex;
+  justify-content: flex-start;
+  border-bottom: 2px solid darkgray;
+  padding: 0.5rem;
+}
+
+.foot {
+  display: flex;
+  justify-content: center;
+  border-top: 2px solid darkgray;
+}
+
 .mainurl {
   text-decoration: none;
   color: var(--color-text);
@@ -53,7 +66,6 @@ import { RouterLink } from 'vue-router'
 
 .mainurl:hover {
   transform: scale(1.01);
-  color: rgb(62, 142, 153);
   transition: 0.3s ease-out;
 }
 </style>
