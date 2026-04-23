@@ -79,25 +79,27 @@ onMounted(async () => {
 
       <!-- Правая колонка (список карточек) -->
       <main class="main-content">
-        <Card v-for="(item, index) in visibleCards" :key="index" class="detail-card">
-          <template #header>
-            <h3>{{ item.designation }}</h3>
-          </template>
-          <template #content>
-            <Message v-if="item.loadingState == 'idle'">Данные еще не загружались</Message>
-            <Skeleton v-else-if="item.loadingState == 'loading'" height="100px" />
-            <DataTable
-              v-else-if="item.toolsList.length > 0 && item.loadingState == 'loaded'"
-              :value="item.toolsList"
-            >
-              <Column field="name" header="Наименование оснастки" />
-              <Column field="shifr" header="Шифр оснастки" />
-              <Column field="code" header="Тип оснастки" />
-              <Column field="quantity" header="Кол-во" />
-            </DataTable>
-            <Message v-else severity="info" icon="pi pi-info-circle">Нет данных</Message>
-          </template>
-        </Card>
+        <transition-group name="card-fade" tag="div" class="cards-container">
+          <Card v-for="item in visibleCards" :key="item.designation" class="detail-card">
+            <template #header>
+              <h3>{{ item.designation }}</h3>
+            </template>
+            <template #content>
+              <Message v-if="item.loadingState == 'idle'">Данные еще не загружались</Message>
+              <Skeleton v-else-if="item.loadingState == 'loading'" height="100px" />
+              <DataTable
+                v-else-if="item.toolsList.length > 0 && item.loadingState == 'loaded'"
+                :value="item.toolsList"
+              >
+                <Column field="name" header="Наименование оснастки" />
+                <Column field="shifr" header="Шифр оснастки" />
+                <Column field="code" header="Тип оснастки" />
+                <Column field="quantity" header="Кол-во" />
+              </DataTable>
+              <Message v-else severity="info" icon="pi pi-info-circle">Нет данных</Message>
+            </template>
+          </Card>
+        </transition-group>
       </main>
     </div>
   </div>
@@ -165,10 +167,42 @@ onMounted(async () => {
   gap: 1rem;
 }
 
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
 .detail-card {
   padding: 1rem;
   min-width: 0; /* предотвращает переполнение */
   max-width: 100%;
+}
+
+/* Анимация для карточек */
+.card-fade-move,
+.card-fade-enter-active,
+.card-fade-leave-active {
+  transition: all 0.5s ease;
+}
+
+.card-fade-enter-from {
+  opacity: 0;
+}
+
+.card-fade-leave-to {
+  opacity: 0;
+}
+
+/* Важно: удаляемый элемент не занимает место во время анимации */
+.card-fade-leave-active {
+  position: absolute;
+}
+
+/* Для плавного перемещения соседних элементов */
+.card-fade-move {
+  transition: transform 0.5s ease;
 }
 
 /* Адаптив для мобильных устройств */
