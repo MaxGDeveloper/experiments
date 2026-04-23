@@ -5,14 +5,15 @@ import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
 const isLoadDissamble: Ref<boolean> = ref(true)
 const dateOfActuality = new Date().toLocaleDateString()
 
-const { structureOfdetail, detailsMap, loadingState, getDetailDissamble } = useJournalOfTool()
+const { structureOfDetail, detailsMap, loadingState, getDetailDissamble, getDetailTools } =
+  useJournalOfTool()
 
 const visibleCards: ComputedRef<DetailFullInfo[]> = computed(() => {
-  return structureOfdetail.value[1].map((designation) => {
+  return structureOfDetail.value[1].map((designation) => {
     const detailFull: DetailFullInfo = {
       designation: designation,
       toolsList: detailsMap.get(designation) || [],
-      loadingState: loadingState.get(designation) || false,
+      loadingState: loadingState.get(designation) || 'idle',
     }
 
     return detailFull
@@ -41,7 +42,12 @@ onMounted(async () => {
         <template #content>
           <div style="display: flex; flex-direction: column; gap: 0.5rem">
             <div style="display: flex; justify-content: space-between">
-              <Button severity="contrast" icon="pi pi-search" label="Найти оснастку" />
+              <Button
+                severity="contrast"
+                icon="pi pi-search"
+                label="Найти оснастку"
+                @click="getDetailTools"
+              />
             </div>
             <Message
               v-if="isLoadDissamble"
@@ -55,14 +61,16 @@ onMounted(async () => {
             </Message>
             <PickList
               v-else
-              v-model="structureOfdetail"
+              v-model="structureOfDetail"
               :show-source-controls="false"
               :show-target-controls="false"
             >
               <template #option="{ option }">
-                {{ option }}
+                <p>{{ option }}</p>
               </template>
             </PickList>
+            <h3>Исходный состав: {{ structureOfDetail[0].length }}</h3>
+            <h3>выбранный состав: {{ structureOfDetail[1].length }}</h3>
           </div>
         </template>
       </Card>
@@ -77,8 +85,12 @@ onMounted(async () => {
           <h3>{{ item.designation }}</h3>
         </template>
         <template #content>
-          <Skeleton v-if="item.loadingState" height="100px" />
-          <DataTable v-else-if="item.toolsList.length > 0" :value="item.toolsList">
+          <Message v-if="item.loadingState == 'idle'">Данные еще не загружались</Message>
+          <Skeleton v-else-if="item.loadingState == 'loading'" height="100px" />
+          <DataTable
+            v-else-if="item.toolsList.length > 0 && item.loadingState == 'loaded'"
+            :value="item.toolsList"
+          >
             <Column field="name" header="Наименование оснастки" />
             <Column field="shifr" header="Шифр оснастки" />
             <Column field="code" header="Тип оснастки" />
@@ -96,6 +108,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin: 10px;
 }
 
 section {
