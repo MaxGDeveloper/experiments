@@ -85,7 +85,7 @@ onMounted(async () => {
               <h3>{{ item.designation }}</h3>
             </template>
             <template #content>
-              <Message v-if="item.loadingState == 'idle'">Данные еще не загружались</Message>
+              <p v-if="item.loadingState == 'idle'">Данные еще не загружались</p>
               <Skeleton v-else-if="item.loadingState == 'loading'" height="100px" />
               <DataTable
                 v-else-if="item.toolsList.length > 0 && item.loadingState == 'loaded'"
@@ -184,25 +184,17 @@ onMounted(async () => {
 .card-fade-move,
 .card-fade-enter-active,
 .card-fade-leave-active {
-  transition: all 0.5s ease;
+  transition: all 0.4s ease;
 }
 
-.card-fade-enter-from {
-  opacity: 0;
-}
-
+.card-fade-enter-from,
 .card-fade-leave-to {
   opacity: 0;
 }
 
-/* Важно: удаляемый элемент не занимает место во время анимации */
-.card-fade-leave-active {
-  position: absolute;
-}
-
-/* Для плавного перемещения соседних элементов */
+/* Плавное перемещение соседних карточек при добавлении/удалении */
 .card-fade-move {
-  transition: transform 0.5s ease;
+  transition: transform 0.4s ease;
 }
 
 /* Адаптив для мобильных устройств */
