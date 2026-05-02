@@ -58,7 +58,7 @@ const router = createRouter({
       path: '/pages',
       children: [
         {
-          path: '/journalEuqipment',
+          path: 'journalEuqipment',
           name: 'JournalPage',
           meta: {
             title: 'Детали',

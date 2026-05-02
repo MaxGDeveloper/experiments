@@ -5,19 +5,21 @@ import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
 const isLoadDissamble: Ref<boolean> = ref(true)
 const dateOfActuality = new Date().toLocaleDateString()
 
-const { structureOfDetail, detailsMap, loadingState, getDetailDissamble, getDetailTools } =
+const { sourceItems, selectedItems, detailsMap, loadingState, getDetailDissamble, getDetailTools } =
   useJournalOfTool()
 
 const visibleCards: ComputedRef<DetailFullInfo[]> = computed(() => {
-  return structureOfDetail.value[1].map((designation) => {
-    const detailFull: DetailFullInfo = {
-      designation: designation,
-      toolsList: detailsMap.get(designation) || [],
-      loadingState: loadingState.get(designation) || 'idle',
-    }
+  return selectedItems.value
+    .filter((designation) => loadingState.get(designation) === 'loaded')
+    .map((designation) => {
+      const detailFull: DetailFullInfo = {
+        designation: designation,
+        toolsList: detailsMap.get(designation) || [],
+        loadingState: loadingState.get(designation) || 'idle',
+      }
 
-    return detailFull
-  })
+      return detailFull
+    })
 })
 
 onMounted(async () => {
@@ -45,7 +47,7 @@ onMounted(async () => {
             <h3>Выберите деталь из состава</h3>
           </template>
           <template #content>
-            <div class="picklist-container">
+            <div class="listbox-container">
               <Button
                 severity="contrast"
                 icon="pi pi-search"
@@ -61,17 +63,19 @@ onMounted(async () => {
                 </div>
               </Message>
 
-              <PickList
+              <ListBox
                 v-else
-                v-model="structureOfDetail"
-                :show-source-controls="false"
-                :show-target-controls="false"
-                class="custom-picklist"
+                v-model="selectedItems"
+                :options="sourceItems"
+                multiple
+                checkbox
+                class="custom-listbox"
+                listStyle="min-height: 300px"
               >
                 <template #option="{ option }">
                   <p>{{ option }}</p>
                 </template>
-              </PickList>
+              </ListBox>
             </div>
           </template>
         </Card>
@@ -141,7 +145,7 @@ onMounted(async () => {
   padding: 0.5rem;
 }
 
-.picklist-container {
+.listbox-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -157,7 +161,7 @@ onMounted(async () => {
   align-items: center;
 }
 
-.custom-picklist :deep(.p-picklist-list) {
+.custom-listbox :deep(.p-listbox-list) {
   min-height: 300px;
 }
 

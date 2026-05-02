@@ -15,25 +15,24 @@ export interface DetailFullInfo {
 export type LoadingState = 'idle' | 'loading' | 'loaded'
 
 export function useJournalOfTool() {
-  const structureOfDetail: Ref<string[][]> = ref([[], []])
+  const sourceItems: Ref<string[]> = ref([])
+  const selectedItems: Ref<string[]> = ref([])
   const detailsMap = reactive(new Map<string, ToolInfo[]>())
   const loadingState = reactive(new Map<string, LoadingState>())
 
   async function getDetailDissamble(isLoadDissamble: Ref<boolean>) {
     await executeDelay(5000)
-    structureOfDetail.value[0] = getPartComposition()
+    sourceItems.value = getPartComposition()
     isLoadDissamble.value = false
   }
 
   async function getDetailTools() {
-    const selectedDetails = structureOfDetail.value[1]
-
-    const pending = selectedDetails.filter((detail) => {
+    const pending = selectedItems.value.filter((detail) => {
       const status = loadingState.get(detail)
       return status != 'loading' && status != 'loaded'
     })
 
-    if (!pending) {
+    if (!pending.length) {
       return
     }
 
@@ -53,5 +52,5 @@ export function useJournalOfTool() {
     }
   }
 
-  return { structureOfDetail, detailsMap, loadingState, getDetailDissamble, getDetailTools }
+  return { sourceItems, selectedItems, detailsMap, loadingState, getDetailDissamble, getDetailTools }
 }
