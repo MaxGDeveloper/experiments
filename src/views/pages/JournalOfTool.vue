@@ -4,6 +4,7 @@ import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
 
 const isLoadDissamble: Ref<boolean> = ref(true)
 const dateOfActuality = new Date().toLocaleDateString()
+const isFilterVisible: Ref<boolean> = ref(true)
 
 const { sourceItems, selectedItems, detailsMap, loadingState, getDetailDissamble, getDetailTools } =
   useJournalOfTool()
@@ -39,44 +40,56 @@ onMounted(async () => {
     </section>
 
     <!-- Двухколоночный макет -->
-    <div class="two-columns">
+    <div class="two-columns" :class="{ 'filter-collapsed': !isFilterVisible }">
       <!-- Левая колонка (sticky) -->
       <aside class="sidebar">
         <Card class="sidebar-card">
           <template #header>
-            <h3>Выберите деталь из состава</h3>
+            <div class="card-header">
+              <h3 v-show="isFilterVisible">Выберите деталь из состава</h3>
+              <Button
+                :icon="isFilterVisible ? 'pi pi-angle-left' : 'pi pi-angle-right'"
+                severity="contrast"
+                variant="text"
+                rounded
+                type="button"
+                @click="isFilterVisible = !isFilterVisible"
+              />
+            </div>
           </template>
           <template #content>
-            <div class="listbox-container">
-              <Button
-                severity="contrast"
-                icon="pi pi-search"
-                label="Найти оснастку"
-                @click="getDetailTools"
-                class="search-button"
-              />
+            <transition name="filter-panel">
+              <div v-show="isFilterVisible" class="listbox-container">
+                <Button
+                  severity="contrast"
+                  icon="pi pi-search"
+                  label="Найти оснастку"
+                  @click="getDetailTools"
+                  class="search-button"
+                />
 
-              <Message v-if="isLoadDissamble" severity="secondary" class="loading-message">
-                <div>
-                  <ProgressSpinner />
-                  <h3>Загрузка данных</h3>
-                </div>
-              </Message>
+                <Message v-if="isLoadDissamble" severity="secondary" class="loading-message">
+                  <div>
+                    <ProgressSpinner />
+                    <h3>Загрузка данных</h3>
+                  </div>
+                </Message>
 
-              <ListBox
-                v-else
-                v-model="selectedItems"
-                :options="sourceItems"
-                multiple
-                checkbox
-                class="custom-listbox"
-                listStyle="min-height: 300px"
-              >
-                <template #option="{ option }">
-                  <p>{{ option }}</p>
-                </template>
-              </ListBox>
-            </div>
+                <ListBox
+                  v-else
+                  v-model="selectedItems"
+                  :options="sourceItems"
+                  multiple
+                  checkbox
+                  class="custom-listbox"
+                  listStyle="min-height: 300px"
+                >
+                  <template #option="{ option }">
+                    <p>{{ option }}</p>
+                  </template>
+                </ListBox>
+              </div>
+            </transition>
           </template>
         </Card>
       </aside>
@@ -211,5 +224,36 @@ onMounted(async () => {
   .sidebar {
     position: static;
   }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-panel-enter-active,
+.filter-panel-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.filter-panel-enter-from {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+.filter-panel-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+.two-columns.filter-collapsed {
+  grid-template-columns: auto 1fr;
+}
+
+.two-columns.filter-collapsed .sidebar :deep(.p-card-content) {
+  display: none;
 }
 </style>
