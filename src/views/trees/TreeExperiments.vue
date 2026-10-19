@@ -2,15 +2,54 @@
 /**
  * @file Страница-эксперимент: иерархическое дерево с ленивой загрузкой.
  *
- * Здесь собрана вся логика раскрытия: одиночный узел, всё дерево и поддерево
- * конкретной ветви. Хук отдаёт только «получить ветвь по id».
+ * Дерево информационное: выбора узлов нет.
+ *
+ * Файл разделён на две части, чтобы не смешивать разное:
+ * 1. ПЛАНИРОВЩИК ПОСТЕПЕННОЙ ОТРИСОВКИ — «механика» порций и кадров.
+ *    Вынесен в хук `useProgressiveRender`; здесь только подключение.
+ * 2. ОСНОВНАЯ ЛОГИКА ДЕРЕВА — состояние, загрузка данных, раскрытие/сворачивание.
+ *    Всё, что касается «смысла», живёт здесь; «как рисовать порциями» — выше.
  */
+import { useProgressiveRender } from '@/hooks/useProgressiveRender'
 import { useTreeExperiments } from '@/hooks/useTreeExperiments'
 import { ROOT_ID, type TreeExperimentNodeData } from '@/services/treeExperimentsService'
-import { onMounted, ref, type Ref } from 'vue'
+import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
 import type { TreeNode } from 'primevue/treenode'
 
 const { getBranchById } = useTreeExperiments()
+
+/* ============================================================================
+ * ПЛАНИРОВЩИК ПОСТЕПЕННОЙ ОТРИСОВКИ
+ * Механика: размер порции, ожидание кадра, отмена. Используется в основной
+ * логике ниже (start / batches / frame / isActive / finish / cancel).
+ * ==========================================================================*/
+
+/** Сколько ветвей раскрывается/сворачивается за один кадр. */
+const RENDER_CHUNK_SIZE = 25
+
+/** Пауза между порциями отрисовки (сверх кадра анимации), мс. */
+const RENDER_FRAME_DELAY = 16
+
+const {
+  /** Идёт постепенное раскрытие или сворачивание. */
+  isProcessing,
+  /** Ждёт следующий кадр отрисовки браузера. */
+  frame,
+  /** Режет массив на порции. */
+  batches,
+  /** Начинает новую операцию, отменяя предыдущую. */
+  start,
+  /** Актуальна ли операция (не отменена). */
+  isActive,
+  /** Завершает операцию. */
+  finish,
+  /** Отменяет текущую операцию. */
+  cancel: cancelProcessing,
+} = useProgressiveRender({ chunkSize: RENDER_CHUNK_SIZE, frameDelay: RENDER_FRAME_DELAY })
+
+/* ============================================================================
+ * ОСНОВНАЯ ЛОГИКА ДЕРЕВА
+ * ==========================================================================*/
 
 /* Состояние */
 
@@ -27,6 +66,9 @@ const expandedKeys: Ref<Record<string, boolean>> = ref({})
 
 /** Идёт загрузка корня дерева. */
 const isLoading: Ref<boolean> = ref(false)
+
+/** Сколько ветвей сейчас раскрыто (индикатор прогресса). */
+const expandedBranchCount: ComputedRef<number> = computed(() => Object.keys(expandedKeys.value).length)
 
 /* Признаки узла */
 
@@ -55,8 +97,9 @@ function canExpandBranch(node: TreeNode): boolean {
 
 /* Загрузка данных */
 
-/** Загружает корень дерева и сбрасывает раскрытие. */
+/** Загружает корень дерева, отменяя незавершённые операции и сбрасывая раскрытие. */
 async function loadTree() {
+  cancelProcessing()
   isLoading.value = true
   expandedKeys.value = {}
 
@@ -80,7 +123,7 @@ async function loadChildren(node: TreeNode) {
   node.loading = false
 }
 
-/* Раскрытие */
+/* Раскрытие и сворачивание */
 
 /**
  * Помечает переданные узлы-ветви раскрытыми.
@@ -102,35 +145,41 @@ function markExpanded(nodes: TreeNode[]) {
 }
 
 /**
- * Раскрывает один уровень узлов: помечает их раскрытыми, параллельно
- * догружает детей и возвращает следующий уровень для обработки.
+ * Собирает ключи ветвей по уровням, сверху вниз.
  *
- * Порядок важен: PrimeVue рисует детей только когда есть и `children`,
- * и флаг раскрытия.
+ * Нужно для постепенного сворачивания: идём от самых глубоких ветвей к корню,
+ * чтобы каждая порция снимала небольшой кусок дерева.
  *
- * @param nodes - узлы текущего уровня
- * @returns узлы следующего уровня
+ * @param nodes - корневые узлы
  */
-async function expandLevel(nodes: TreeNode[]): Promise<TreeNode[]> {
-  markExpanded(nodes)
+function collectBranchKeysByLevel(nodes: TreeNode[]): string[][] {
+  const levels: string[][] = []
+  let current = nodes
 
-  const next: TreeNode[] = []
+  while (current.length) {
+    const keys: string[] = []
+    const next: TreeNode[] = []
 
-  await Promise.all(
-    nodes.map(async (node) => {
+    for (const node of current) {
       if (!isBranch(node)) {
-        return
+        continue
       }
 
-      await loadChildren(node)
+      keys.push(node.key)
 
       if (node.children?.length) {
         next.push(...node.children)
       }
-    }),
-  )
+    }
 
-  return next
+    if (keys.length) {
+      levels.push(keys)
+    }
+
+    current = next
+  }
+
+  return levels
 }
 
 /**
@@ -142,36 +191,115 @@ async function onNodeExpand(node: TreeNode) {
   await loadChildren(node)
 }
 
-/** Раскрывает всё дерево целиком, уровень за уровнем. */
-async function expandAll() {
-  let level = treeNodes.value
+/**
+ * Обрабатывает один уровень: сначала параллельно догружает детей всех ветвей,
+ * затем раскрывает их порциями по кадрам.
+ *
+ * Порядок важен: PrimeVue рисует детей только когда есть и `children`,
+ * и флаг раскрытия. Порционное раскрытие не даёт отрисовать уровень одним тактом.
+ *
+ * @param nodes - узлы текущего уровня
+ * @param id - номер операции (для отмены)
+ * @returns узлы следующего уровня
+ */
+async function expandLevel(nodes: TreeNode[], id: number): Promise<TreeNode[]> {
+  await Promise.all(
+    nodes.map(async (node) => {
+      if (isBranch(node)) {
+        await loadChildren(node)
+      }
+    }),
+  )
 
-  while (level.length) {
-    level = await expandLevel(level)
+  if (!isActive(id)) {
+    return []
   }
+
+  const next: TreeNode[] = []
+
+  nodes.forEach((node) => {
+    if (isBranch(node) && node.children?.length) {
+      next.push(...node.children)
+    }
+  })
+
+  for (const batch of batches(nodes.filter(isBranch))) {
+    if (!isActive(id)) {
+      return []
+    }
+
+    markExpanded(batch)
+    await frame()
+  }
+
+  return next
 }
 
 /**
- * Раскрывает конкретную ветвь вместе со всеми вложенными ветвями.
+ * Постепенно раскрывает конкретную ветвь вместе со всеми вложенными ветвями.
  *
  * @param node - корневой узел ветви
  */
 async function expandBranch(node: TreeNode) {
-  expandedKeys.value = { ...expandedKeys.value, [node.key]: true }
+  const id = start()
 
-  await loadChildren(node)
+  try {
+    expandedKeys.value = { ...expandedKeys.value, [node.key]: true }
 
-  let level = node.children ?? []
+    await loadChildren(node)
 
-  while (level.length) {
-    level = await expandLevel(level)
+    let level = node.children ?? []
+
+    while (level.length && isActive(id)) {
+      level = await expandLevel(level, id)
+    }
+  } finally {
+    finish(id)
   }
 }
 
-/** Сворачивает всё дерево. */
-function collapseAll() {
-  expandedKeys.value = {}
+/** Постепенно раскрывает всё дерево, уровень за уровнем. Можно отменить. */
+async function expandAll() {
+  const id = start()
+
+  try {
+    let level = treeNodes.value
+
+    while (level.length && isActive(id)) {
+      level = await expandLevel(level, id)
+    }
+  } finally {
+    finish(id)
+  }
 }
+
+/** Постепенно сворачивает всё дерево — от самых глубоких ветвей к корню. Можно отменить. */
+async function collapseAll() {
+  const id = start()
+
+  try {
+    const levels = collectBranchKeysByLevel(treeNodes.value)
+
+    for (let index = levels.length - 1; index >= 0; index--) {
+      for (const batch of batches(levels[index])) {
+        if (!isActive(id)) {
+          return
+        }
+
+        const next = { ...expandedKeys.value }
+
+        batch.forEach((key) => delete next[key])
+        expandedKeys.value = next
+
+        await frame()
+      }
+    }
+  } finally {
+    finish(id)
+  }
+}
+
+/* Жизненный цикл */
 
 onMounted(() => {
   loadTree()
@@ -185,9 +313,32 @@ onMounted(() => {
     </section>
 
     <section class="toolbar">
-      <Button @click="expandAll" icon="pi pi-plus" label="Развернуть все" :disabled="isLoading" />
+      <Button
+        @click="expandAll"
+        icon="pi pi-plus"
+        label="Развернуть все"
+        :disabled="isLoading || isProcessing"
+      />
       <Button @click="collapseAll" icon="pi pi-minus" label="Свернуть все" :disabled="isLoading" />
-      <Button @click="loadTree" icon="pi pi-refresh" label="Обновить" :loading="isLoading" />
+      <Button
+        v-if="isProcessing"
+        @click="cancelProcessing"
+        icon="pi pi-stop-circle"
+        label="Стоп"
+        severity="danger"
+      />
+      <Button
+        @click="loadTree"
+        icon="pi pi-refresh"
+        label="Обновить"
+        :loading="isLoading"
+        :disabled="isProcessing"
+      />
+    </section>
+
+    <section v-if="isProcessing" class="progress">
+      <i class="pi pi-spin pi-spinner" />
+      <span>Постепенная отрисовка… ветвей раскрыто: {{ expandedBranchCount }}</span>
     </section>
 
     <section class="tree-wrapper">
@@ -239,7 +390,16 @@ onMounted(() => {
 .toolbar {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--p-text-muted-color, #6b7280);
 }
 
 .tree-wrapper {

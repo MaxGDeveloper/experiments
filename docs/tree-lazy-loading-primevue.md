@@ -14,7 +14,8 @@
 |---|---|
 | [`src/services/treeExperimentsService.ts`](../src/services/treeExperimentsService.ts) | «Сервер»: по `id` ветви отдаёт её непосредственных детей. Дерево строится детерминированно из `id`. |
 | [`src/hooks/useTreeExperiments.ts`](../src/hooks/useTreeExperiments.ts) | Обёртка-API. Ровно один метод `getBranchById(id)`. |
-| [`src/views/trees/TreeExperiments.vue`](../src/views/trees/TreeExperiments.vue) | Страница. **Вся** логика раскрытия живёт здесь. |
+| [`src/hooks/useProgressiveRender.ts`](../src/hooks/useProgressiveRender.ts) | Планировщик постепенной отрисовки: порции, кадры, отмена. Общий хук, к дереву не привязан. |
+| [`src/views/trees/TreeExperiments.vue`](../src/views/trees/TreeExperiments.vue) | Страница. **Вся** логика раскрытия живёт здесь. В файле два блока: «планировщик отрисовки» (подключение) и «основная логика дерева». |
 | [`src/router/index.ts`](../src/router/index.ts) | Маршрут `/ExperimentalTree` (name `ExperimentalTree`). |
 | [`src/views/HomeView.vue`](../src/views/HomeView.vue) | Кнопка-ссылка «Дерево иерархии» на главной. |
 
@@ -415,6 +416,8 @@ onMounted(() => { loadTree() })
 
 ### Шаг 6. Логика раскрытия (все четыре сценария)
 
+Базовая идея:
+
 ```ts
 function isBranch(node: TreeNode) { return node.leaf === false }
 
@@ -434,6 +437,10 @@ async function expandBranch(node: TreeNode) { // развернуть одну �
 
 function collapseAll() { expandedKeys.value = {} }
 ```
+
+> Это учебный «скелет». В рабочей версии раскрытие и сворачивание идут
+> **порциями по кадрам** (чтобы большие деревья не вешали страницу) — см.
+> [раздел 6](#6-большие-деревья-почему-развернуть-всё-вешает-страницу-и-как-это-исправить).
 
 ### Шаг 7. Кнопка «развернуть вложенные ветви» — только там, где нужно
 
@@ -478,7 +485,140 @@ function canExpandBranch(node: TreeNode): boolean {
 
 ---
 
-## 6. Принятые архитектурные решения (и почему так)
+## 6. Большие деревья: почему «развернуть всё» вешает страницу и как это исправить
+
+### В чём проблема
+
+PrimeVue рендерит DOM на **каждый раскрытый** узел: элементы `li`/`div`/`span`,
+плюс компонент `TreeNode` на каждый узел и наш `Button` на каждую корневую ветвь.
+Итого на N узлов — примерно N компонентов `TreeNode` и 4–6 DOM-элементов на узел.
+Для 10 000 узлов это ~40–60 тыс. DOM-элементов и ~10 тыс. компонентов Vue.
+
+Когда `expandedKeys` меняется «разом» (все ключи в одном такте), Vue создаёт
+все эти компоненты в одном синхронном такте — страница замирает на секунды.
+Сворачивание (`expandedKeys.value = {}`) — это размонтирование всех компонентов
+одним тактом, тоже тяжёлый такт.
+
+У `Tree` в PrimeVue 4 **нет виртуализации** (ни `virtualScrollerOptions`,
+ни `VirtualScroller`); есть только `scrollHeight` — он ограничивает высоту и
+включает скролл, но число DOM-узлов не сокращает, поэтому проблему не решает.
+
+### Что даёт постепенная отрисовка (progressive rendering)
+
+Приём тот же, что при отрисовке большого количества карточек: разбиваем работу
+на порции и между порциями отдаём браузеру кадр на отрисовку.
+
+Чтобы не смешивать это с логикой дерева, «механика» вынесена в отдельный хук
+[`src/hooks/useProgressiveRender.ts`](../src/hooks/useProgressiveRender.ts):
+
+```ts
+// src/hooks/useProgressiveRender.ts — вся «механика» порций и отмены
+export function useProgressiveRender({ chunkSize = 25, frameDelay = 16 } = {}) {
+  const isProcessing = ref(false)
+  let runId = 0
+
+  function frame(): Promise<void> {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => (frameDelay > 0 ? setTimeout(resolve, frameDelay) : resolve()))
+    })
+  }
+
+  function batches<T>(items: T[]): T[][] {          // режем на порции
+    const result: T[][] = []
+    for (let i = 0; i < items.length; i += chunkSize) result.push(items.slice(i, i + chunkSize))
+    return result
+  }
+
+  function start() { runId += 1; isProcessing.value = true; return runId }
+  function isActive(id: number) { return id === runId }
+  function finish(id: number) { if (isActive(id)) isProcessing.value = false }
+  function cancel() { runId += 1; isProcessing.value = false }
+
+  return { isProcessing, frame, batches, start, isActive, finish, cancel }
+}
+```
+
+Раскрытие уровня: сначала **параллельно** догружаем детей всех ветвей уровня
+(сетевые запросы можно параллелить), затем раскрываем их **порциями по кадрам**
+(тяжёлая часть — именно отрисовка):
+
+```ts
+async function expandLevel(nodes: TreeNode[], id: number): Promise<TreeNode[]> {
+  await Promise.all(nodes.map((node) => (isBranch(node) ? loadChildren(node) : undefined)))
+  if (!isActive(id)) return []
+
+  const next: TreeNode[] = []
+  nodes.forEach((node) => {
+    if (isBranch(node) && node.children?.length) next.push(...node.children)
+  })
+
+  for (const batch of batches(nodes.filter(isBranch))) {
+    if (!isActive(id)) return []
+    markExpanded(batch)   // переприсваиваем expandedKeys новым объектом
+    await frame()         // браузер успевает нарисовать порцию
+  }
+
+  return next
+}
+```
+
+Сворачивание — от самых глубоких ветвей к корню, тоже порциями
+(каждая порция снимает небольшой кусок дерева):
+
+```ts
+async function collapseAll() {
+  const id = start()
+  try {
+    const levels = collectBranchKeysByLevel(treeNodes.value)
+    for (let index = levels.length - 1; index >= 0; index--) {
+      for (const batch of batches(levels[index])) {
+        if (!isActive(id)) return
+        const next = { ...expandedKeys.value }
+        batch.forEach((key) => delete next[key])
+        expandedKeys.value = next
+        await frame()
+      }
+    }
+  } finally {
+    finish(id)
+  }
+}
+```
+
+### Отмена операции
+
+`runId` — номер текущей операции. Запуск новой операции увеличивает `runId`
+и тем самым отменяет предыдущую; циклы проверяют `isActive(id)` и выходят.
+Отдельная кнопка «Стоп» вызывает `cancelProcessing()`. Это же позволяет
+нажать «Свернуть всё» прямо во время раскрытия — раскрытие отменится.
+
+Индикатор прогресса — просто число раскрытых ветвей:
+`computed(() => Object.keys(expandedKeys.value).length)`.
+
+### Ограничения и когда нужна виртуализация
+
+- Постепенность убирает **фриз одним тактом**, но не уменьшает **итоговое**
+  число DOM-узлов: когда всё развёрнуто, скролл по десяткам тысяч узлов всё
+  равно может подтормаживать.
+- Ориентир: до ~1–5 тыс. узлов постепенной отрисовки достаточно. Для десятков
+  тысяч нужна **виртуализация** (рендерить только видимые строки) — плоский
+  список видимых узлов + виртуальный скролл; `Tree` из PrimeVue для этого не
+  подходит и отрисовку дерева пришлось бы писать вручную.
+- Если сеть медленная, добавь ограничение параллельных запросов (например,
+  грузить уровень порциями) — сейчас уровень грузится целиком параллельно.
+
+### Что видно на эксперименте
+
+| Действие | Результат |
+|---|---|
+| «Развернуть все» | 20 → 68 → 146 → 232 → 294 узла (ступенями, ~2,2 с) |
+| «Свернуть все» | 294 → 146 → 20 (ступенями) |
+| Во время обработки | индикатор «Постепенная отрисовка… ветвей раскрыто: N» |
+| «Стоп» | процесс замирает (68 → 68 → 68), индикатор исчезает |
+
+---
+
+## 7. Принятые архитектурные решения (и почему так)
 
 1. **API без состояния, по id.** `getNodesById(id)` не хранит дерево — любой
    узел можно запросить в любой момент. Это упрощает ленивую загрузку и
@@ -492,16 +632,21 @@ function canExpandBranch(node: TreeNode): boolean {
 6. **Флаг `hasNestedBranches` в данных узла.** Позволяет показать кнопку
    сразу, не дожидаясь раскрытия ветви.
 7. **Нативный `title` вместо `v-tooltip`.** Директивы не автоимпортируются.
+8. **Постепенная отрисовка с отменой.** Тяжёлые операции (раскрыть/свернуть всё)
+   идут порциями по кадрам и могут быть отменены — см. раздел 6.
 
 ---
 
-## 7. Чек-лист приёмки
+## 8. Чек-лист приёмки
 
 - [ ] Корень грузится по `onMounted`, во время загрузки — `ProgressSpinner`.
 - [ ] У ветвей видны стрелочки; у листьев — нет.
 - [ ] Клик по стрелочке показывает спиннер (`p-icon-spin`), затем детей.
 - [ ] Повторный клик не перезагружает детей (грузим ровно один раз).
 - [ ] «Развернуть всё» раскрывает всё дерево, спиннеров не остаётся.
+- [ ] Раскрытие/сворачивание идут ступенями (порциями по кадрам), страница не фризит.
+- [ ] Во время обработки виден индикатор прогресса и кнопка «Стоп».
+- [ ] «Стоп» останавливает процесс и убирает индикатор.
 - [ ] «Свернуть всё» сбрасывает `expandedKeys`.
 - [ ] Кнопка «развернуть вложенные» есть только у корней с вложенностью > 1 уровня.
 - [ ] У одноуровневой ветви (Группа 11) кнопки нет.
