@@ -18,6 +18,9 @@ function goToExperimentalPage4() {
 function goToJournalPage() {
   router.push({ name: 'JournalPage' })
 }
+function goToExperimentalTree() {
+  router.push({ name: 'ExperimentalTree' })
+}
 </script>
 
 <template>
@@ -42,6 +45,11 @@ function goToJournalPage() {
               label="Табличные данные #2"
               :icon="PrimeIcons.TABLE"
               @click="goToExperimentalPage2"
+            />
+            <Button
+              label="Дерево иерархии"
+              :icon="PrimeIcons.SITEMAP"
+              @click="goToExperimentalTree"
             />
           </div>
         </template>

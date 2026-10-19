@@ -31,6 +31,14 @@ const router = createRouter({
           },
           component: () => import('../views/tables/TableExperiments2.vue'),
         },
+        {
+          path: '/ExperimentalTree',
+          name: 'ExperimentalTree',
+          meta: {
+            title: 'Эксперименты с деревом',
+          },
+          component: () => import('../views/trees/TreeExperiments.vue'),
+        },
       ],
     },
     {
