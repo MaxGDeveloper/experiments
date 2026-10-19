@@ -2,6 +2,11 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
+## Экспериментальные страницы
+
+- **Дерево иерархии (ленивая загрузка)** — роут `/ExperimentalTree`
+  - Подробный разбор и инструкция: [docs/tree-lazy-loading-primevue.md](docs/tree-lazy-loading-primevue.md)
+
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).

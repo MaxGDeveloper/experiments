@@ -1,21 +1,61 @@
 <script setup lang="ts">
+/**
+ * @file Страница-эксперимент: иерархическое дерево с ленивой загрузкой.
+ *
+ * Здесь собрана вся логика раскрытия: одиночный узел, всё дерево и поддерево
+ * конкретной ветви. Хук отдаёт только «получить ветвь по id».
+ */
 import { useTreeExperiments } from '@/hooks/useTreeExperiments'
-import { ROOT_ID } from '@/services/treeExperimentsService'
-import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
+import { ROOT_ID, type TreeExperimentNodeData } from '@/services/treeExperimentsService'
+import { onMounted, ref, type Ref } from 'vue'
 import type { TreeNode } from 'primevue/treenode'
-import type { TreeSelectionKeys } from 'primevue/tree'
 
 const { getBranchById } = useTreeExperiments()
 
+/* Состояние */
+
+/** Корневые узлы дерева. */
 const treeNodes: Ref<TreeNode[]> = ref([])
+
+/**
+ * Какие узлы раскрыты.
+ *
+ * Ключевой момент: объект всегда переприсваивается новым (`{ ...old, [key]: true }`),
+ * а не мутируется по месту, иначе PrimeVue не увидит изменение.
+ */
 const expandedKeys: Ref<Record<string, boolean>> = ref({})
-const selectedKeys: Ref<TreeSelectionKeys> = ref({})
+
+/** Идёт загрузка корня дерева. */
 const isLoading: Ref<boolean> = ref(false)
 
+/* Признаки узла */
+
+/**
+ * Является ли узел ветвью (может раскрываться).
+ *
+ * @param node - узел дерева
+ */
 function isBranch(node: TreeNode): boolean {
   return node.leaf === false
 }
 
+/**
+ * Нужно ли показывать у узла кнопку «развернуть все вложенные ветви».
+ *
+ * Кнопка есть только у корневых групп, внутри которых больше одного уровня
+ * вложенности. У вложенных узлов кнопки нет никогда.
+ *
+ * @param node - узел дерева
+ */
+function canExpandBranch(node: TreeNode): boolean {
+  const data = node.data as TreeExperimentNodeData | undefined
+
+  return data?.level === 0 && data.hasNestedBranches === true
+}
+
+/* Загрузка данных */
+
+/** Загружает корень дерева и сбрасывает раскрытие. */
 async function loadTree() {
   isLoading.value = true
   expandedKeys.value = {}
@@ -25,6 +65,11 @@ async function loadTree() {
   isLoading.value = false
 }
 
+/**
+ * Догружает детей узла ровно один раз (повторные вызовы ничего не делают).
+ *
+ * @param node - узел-ветвь
+ */
 async function loadChildren(node: TreeNode) {
   if (!isBranch(node) || node.children?.length) {
     return
@@ -35,6 +80,15 @@ async function loadChildren(node: TreeNode) {
   node.loading = false
 }
 
+/* Раскрытие */
+
+/**
+ * Помечает переданные узлы-ветви раскрытыми.
+ *
+ * Объект ключей переприсваивается целиком — иначе Tree не отреагирует.
+ *
+ * @param nodes - узлы, которые нужно раскрыть
+ */
 function markExpanded(nodes: TreeNode[]) {
   const keys: Record<string, boolean> = {}
 
@@ -47,6 +101,16 @@ function markExpanded(nodes: TreeNode[]) {
   expandedKeys.value = { ...expandedKeys.value, ...keys }
 }
 
+/**
+ * Раскрывает один уровень узлов: помечает их раскрытыми, параллельно
+ * догружает детей и возвращает следующий уровень для обработки.
+ *
+ * Порядок важен: PrimeVue рисует детей только когда есть и `children`,
+ * и флаг раскрытия.
+ *
+ * @param nodes - узлы текущего уровня
+ * @returns узлы следующего уровня
+ */
 async function expandLevel(nodes: TreeNode[]): Promise<TreeNode[]> {
   markExpanded(nodes)
 
@@ -69,10 +133,16 @@ async function expandLevel(nodes: TreeNode[]): Promise<TreeNode[]> {
   return next
 }
 
+/**
+ * Ленивая загрузка по клику на тогглер (событие `node-expand`).
+ *
+ * @param node - раскрываемый узел
+ */
 async function onNodeExpand(node: TreeNode) {
   await loadChildren(node)
 }
 
+/** Раскрывает всё дерево целиком, уровень за уровнем. */
 async function expandAll() {
   let level = treeNodes.value
 
@@ -81,6 +151,11 @@ async function expandAll() {
   }
 }
 
+/**
+ * Раскрывает конкретную ветвь вместе со всеми вложенными ветвями.
+ *
+ * @param node - корневой узел ветви
+ */
 async function expandBranch(node: TreeNode) {
   expandedKeys.value = { ...expandedKeys.value, [node.key]: true }
 
@@ -93,37 +168,10 @@ async function expandBranch(node: TreeNode) {
   }
 }
 
+/** Сворачивает всё дерево. */
 function collapseAll() {
   expandedKeys.value = {}
 }
-
-const selectedLabel: ComputedRef<string | null> = computed(() => {
-  const key = Object.keys(selectedKeys.value).find((item) => selectedKeys.value[item] === true)
-
-  if (!key) {
-    return null
-  }
-
-  const findLabel = (nodes: TreeNode[]): string | null => {
-    for (const node of nodes) {
-      if (node.key === key) {
-        return node.label ?? null
-      }
-
-      if (node.children?.length) {
-        const found = findLabel(node.children)
-
-        if (found) {
-          return found
-        }
-      }
-    }
-
-    return null
-  }
-
-  return findLabel(treeNodes.value)
-})
 
 onMounted(() => {
   loadTree()
@@ -152,9 +200,7 @@ onMounted(() => {
           <Tree
             v-else
             v-model:expandedKeys="expandedKeys"
-            v-model:selectionKeys="selectedKeys"
             :value="treeNodes"
-            selection-mode="single"
             loading-mode="icon"
             :filter="true"
             filter-mode="lenient"
@@ -164,7 +210,7 @@ onMounted(() => {
             <template #default="{ node }">
               <span class="node-label">{{ node.label }}</span>
               <Button
-                v-if="isBranch(node)"
+                v-if="canExpandBranch(node)"
                 icon="pi pi-angle-double-down"
                 severity="secondary"
                 variant="text"
@@ -178,10 +224,6 @@ onMounted(() => {
           </Tree>
         </template>
       </Card>
-    </section>
-
-    <section v-if="selectedLabel">
-      <Message severity="info" icon="pi pi-info-circle">Выбран узел: {{ selectedLabel }}</Message>
     </section>
   </div>
 </template>
