@@ -5,6 +5,8 @@ export interface TreeExperimentNodeData {
   path: number[]
 }
 
+export const ROOT_ID = 'root'
+export const ROOT_COUNT = 20
 export const MAX_DEPTH = 3
 
 function hashKey(value: string, salt: string): number {
@@ -21,6 +23,18 @@ function hashKey(value: string, salt: string): number {
 
 function pseudoRandom(value: string, salt: string): number {
   return (hashKey(value, salt) % 1000) / 1000
+}
+
+function buildKey(path: number[]): string {
+  return `node-${path.join('-')}`
+}
+
+function parsePath(id: string): number[] {
+  if (id === ROOT_ID) {
+    return []
+  }
+
+  return id.replace(/^node-/, '').split('-').map(Number)
 }
 
 function buildLabel(level: number, path: number[]): string {
@@ -49,33 +63,48 @@ function buildIcon(level: number): string {
   }
 }
 
-function createNode(path: number[], level: number): TreeNode {
-  const key = `node-${path.join('-')}`
-  const isLeaf = level >= MAX_DEPTH || (level >= 1 && pseudoRandom(key, 'leaf') < 0.35)
+function isLeafId(id: string): boolean {
+  if (id === ROOT_ID) {
+    return false
+  }
+
+  const level = parsePath(id).length - 1
+
+  if (level >= MAX_DEPTH) {
+    return true
+  }
+
+  if (level === 0) {
+    return false
+  }
+
+  return pseudoRandom(id, 'leaf') < 0.35
+}
+
+function createNode(path: number[]): TreeNode {
+  const key = buildKey(path)
+  const level = path.length - 1
 
   return {
     key,
     label: buildLabel(level, path),
     icon: buildIcon(level),
-    leaf: isLeaf,
+    leaf: isLeafId(key),
     data: { level, path } satisfies TreeExperimentNodeData,
   }
 }
 
-export function getRootNodes(): TreeNode[] {
-  return Array.from({ length: 20 }, (_, index) => createNode([index + 1], 0))
-}
+export function getNodesById(id: string): TreeNode[] {
+  if (id === ROOT_ID) {
+    return Array.from({ length: ROOT_COUNT }, (_, index) => createNode([index + 1]))
+  }
 
-export function getChildNodes(parent: TreeNode): TreeNode[] {
-  const data = parent.data as TreeExperimentNodeData | undefined
-  const level = data?.level ?? 0
-  const path = data?.path ?? []
-
-  if (level >= MAX_DEPTH) {
+  if (isLeafId(id)) {
     return []
   }
 
-  const count = 2 + Math.floor(pseudoRandom(parent.key, 'count') * 3)
+  const path = parsePath(id)
+  const count = 2 + Math.floor(pseudoRandom(id, 'count') * 3)
 
-  return Array.from({ length: count }, (_, index) => createNode([...path, index + 1], level + 1))
+  return Array.from({ length: count }, (_, index) => createNode([...path, index + 1]))
 }
